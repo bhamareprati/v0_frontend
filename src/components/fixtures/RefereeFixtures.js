@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from './Fixtures.module.scss';
 import BaseFixtures from './BaseFixtures';
 import { useRouter } from 'next/navigation';
+import { OutcomeBadge, TeamScore } from '@/components/outcomeBadge';
 
 const RefereeFixtures = ({ tournamentId, totalRounds }) => {
     const router = useRouter();
@@ -66,7 +67,7 @@ const RefereeFixtures = ({ tournamentId, totalRounds }) => {
                         {match.team1_id && (
                             <div className={styles.teamId}>Team ID: {match.team1_id}</div>
                         )}
-                        <div className={styles.score}>{match.team1Score}</div>
+                        <TeamScore match={match} teamNumber={1} className={styles.score} />
                     </div>
                     <div className={styles.vs}>vs</div>
                     <div className={`${styles.team} ${
@@ -76,7 +77,7 @@ const RefereeFixtures = ({ tournamentId, totalRounds }) => {
                         {match.team2_id && (
                             <div className={styles.teamId}>Team ID: {match.team2_id}</div>
                         )}
-                        <div className={styles.score}>{match.team2Score}</div>
+                        <TeamScore match={match} teamNumber={2} className={styles.score} />
                     </div>
                 </div>
 
@@ -91,6 +92,7 @@ const RefereeFixtures = ({ tournamentId, totalRounds }) => {
                     <span className={`${styles.status} ${styles[match.status]}`}>
                         {match.status.charAt(0).toUpperCase() + match.status.slice(1)}
                     </span>
+                    <OutcomeBadge outcomeType={match.outcome_type} />
                 </div>
             </div>
         ));

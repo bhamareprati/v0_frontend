@@ -7,9 +7,11 @@ import { apiCall } from '@/store/utils';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import KnockoutBracket from './KnockoutBracket';
+import { OutcomeBadge, TeamScore } from '@/components/outcomeBadge';
+import { parseMatchResult } from '@/store/matchOutcome';
 
 
-const Fixtures = ({ 
+const Fixtures = ({
     matches: externalMatches, 
     tournamentId,
     onMatchClick, 
@@ -63,16 +65,6 @@ const Fixtures = ({
         }
     }, [matches]);
 
-    const parseMatchResult = (result) => {
-        if (!result) return { team1Score: 0, team2Score: 0 };
-        
-        const scores = result.split('-').map(Number);
-        return {
-            team1Score: scores[0] || 0,
-            team2Score: scores[1] || 0
-        };
-    };
-
     const fetchMatches = async () => {
         try {
             setLoading(true);
@@ -92,6 +84,7 @@ const Fixtures = ({
                             ...match,
                             ...parseMatchResult(match.match_result),
                             status: match.match_status?.status || 'pending',
+                            outcome_type: match.match_status?.outcome_type || null,
                             winner_team_id: match.match_status?.is_final ? match.match_status?.winner_team_id : null,
                         });
                         return;
@@ -115,6 +108,7 @@ const Fixtures = ({
                         round_name: match.round_name || `Round ${match.round_id}`,
                         ...parseMatchResult(match.match_result),
                         status: match.match_status?.status || 'pending',
+                        outcome_type: match.match_status?.outcome_type || null,
                         winner_team_id: match.match_status?.is_final ? match.match_status?.winner_team_id : null,
                         team1_id: match.team1?.team_id,
                         team2_id: match.team2?.team_id,
@@ -308,7 +302,7 @@ const Fixtures = ({
                             {match.team1_id && (
                                 <div className={styles.teamId}>Team ID: {match.team1_id}</div>
                             )}
-                            <div className={styles.score}>{match.team1Score}</div>
+                            <TeamScore match={match} teamNumber={1} className={styles.score} />
                         </div>
                         <div className={styles.vs}>vs</div>
                         <div className={`${styles.team} ${
@@ -318,13 +312,14 @@ const Fixtures = ({
                             {match.team2_id && (
                                 <div className={styles.teamId}>Team ID: {match.team2_id}</div>
                             )}
-                            <div className={styles.score}>{match.team2Score}</div>
+                            <TeamScore match={match} teamNumber={2} className={styles.score} />
                         </div>
                     </div>
                     <div className={styles.matchInfo}>
                         <span className={styles.pool}>Pool: {match.pool}</span>
                         <span className={styles.round}>{match.round_name}</span>
                         {match.court_number && <span className={styles.courtAssigned}>Court: {match.court_number}</span>}
+                        <OutcomeBadge outcomeType={match.outcome_type} />
                     </div>
                 </div>
             ));
@@ -369,7 +364,7 @@ const Fixtures = ({
                                         {match.team1_id && (
                                             <div className={styles.teamId}>Team ID: {match.team1_id}</div>
                                         )}
-                                        <div className={styles.score}>{match.team1Score}</div>
+                                        <TeamScore match={match} teamNumber={1} className={styles.score} />
                                     </div>
                                     <div className={styles.vs}>vs</div>
                                     <div className={`${styles.team} ${
@@ -379,12 +374,13 @@ const Fixtures = ({
                                         {match.team2_id && (
                                             <div className={styles.teamId}>Team ID: {match.team2_id}</div>
                                         )}
-                                        <div className={styles.score}>{match.team2Score}</div>
+                                        <TeamScore match={match} teamNumber={2} className={styles.score} />
                                     </div>
                                 </div>
                                 {match.status === 'completed' && (
                                     <div className={styles.status}>Completed</div>
                                 )}
+                                <OutcomeBadge outcomeType={match.outcome_type} />
                             </div>
                         ))}
                     </div>

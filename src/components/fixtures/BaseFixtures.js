@@ -4,8 +4,9 @@ import styles from './Fixtures.module.scss';
 import { endpoints } from '@/store/urls';
 import { apiCall } from '@/store/utils';
 import toast from 'react-hot-toast';
+import { parseMatchResult } from '@/store/matchOutcome';
 
-const BaseFixtures = ({ 
+const BaseFixtures = ({
     matches: externalMatches, 
     tournamentId,
     totalRounds,
@@ -53,16 +54,6 @@ const BaseFixtures = ({
         }
     };
 
-    const parseMatchResult = (result) => {
-        if (!result) return { team1Score: 0, team2Score: 0 };
-        
-        const scores = result.split('-').map(Number);
-        return {
-            team1Score: scores[0] || 0,
-            team2Score: scores[1] || 0
-        };
-    };
-
     const transformMatchesData = (matchesArray) => {
         const transformed = {};
         
@@ -85,6 +76,7 @@ const BaseFixtures = ({
                 round_name: match.round_name || `Round ${match.round_id}`,
                 ...parseMatchResult(match.match_result),
                 status: match.match_status?.status || 'pending',
+                outcome_type: match.match_status?.outcome_type || null,
                 winner_team_id: match.match_status?.is_final ? match.match_status?.winner_team_id : null,
                 team1_id: match.team1?.team_id,
                 team2_id: match.team2?.team_id,

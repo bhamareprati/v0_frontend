@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Bracket, Seed, SeedItem, SeedTeam } from 'react-brackets';
+import { isUnscoredOutcome, parseMatchResult } from '@/store/matchOutcome';
 
 const CustomSeed = ({ seed, breakpoint }) => {
     return (
@@ -98,8 +99,15 @@ const KnockoutBracket2 = ({ matches }) => {
                 });
             }
 
-            const scores = match.match_result ? match.match_result.split('-').map(Number) : [0, 0];
-            
+            const walkover = isUnscoredOutcome(match.match_status?.outcome_type);
+            const parsed = parseMatchResult(match.match_result);
+            const winnerId = match.match_status?.winner_team_id;
+            // Walkover: "W/O" beside the winner, nothing beside the other team (no 0-0)
+            const scores = walkover
+                ? [winnerId === match.team1?.team_id ? 'W/O' : undefined,
+                   winnerId === match.team2?.team_id ? 'W/O' : undefined]
+                : [parsed.team1Score, parsed.team2Score];
+
             roundsMap.get(roundNum).seeds.push({
                 id: match.match_id,
                 date: null,

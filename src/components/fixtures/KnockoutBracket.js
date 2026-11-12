@@ -2,6 +2,16 @@
 
 import React, { useMemo } from 'react';
 import { SingleEliminationBracket, Match, SVGViewer, createTheme } from '@g-loot/react-tournament-brackets';
+import { isUnscoredOutcome } from '@/store/matchOutcome';
+
+// Text next to a participant: the score, or "W/O" for the winner of a walkover (no score exists)
+const resultTextFor = (match, teamIndex) => {
+    if (isUnscoredOutcome(match.match_status?.outcome_type)) {
+        const teamId = teamIndex === 0 ? match.team1?.team_id : match.team2?.team_id;
+        return match.match_status?.winner_team_id === teamId ? 'W/O' : null;
+    }
+    return match.match_result.split('-')[teamIndex] || null;
+};
 
 const theme = createTheme({
     textColor: { main: '#000000', highlighted: '#07090D', dark: '#3E414D' },
@@ -84,14 +94,14 @@ const KnockoutBracket = ({ matches }) => {
                 participants: [
                     {
                         id: match.team1?.team_id || 'TBD',
-                        resultText: match.match_result.split('-')[0] || null,
+                        resultText: resultTextFor(match, 0),
                         isWinner: match.match_status?.winner_team_id === match.team1?.team_id,
                         status: match.team1?.checked_in ? 'PLAYED' : null,
                         name: formatPlayerNames(match.team1_players)
                     },
                     {
                         id: match.team2?.team_id || 'TBD',
-                        resultText: match.match_result.split('-')[1] || null,
+                        resultText: resultTextFor(match, 1),
                         isWinner: match.match_status?.winner_team_id === match.team2?.team_id,
                         status: match.team2?.checked_in ? 'PLAYED' : null,
                         name: formatPlayerNames(match.team2_players)

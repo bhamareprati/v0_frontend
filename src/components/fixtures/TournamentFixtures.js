@@ -7,6 +7,8 @@ import KnockoutBracket2 from './KnockoutBracket2';
 import { endpoints } from '@/store/urls';
 import { apiCall } from '@/store/utils';
 import toast from 'react-hot-toast';
+import { OutcomeBadge, TeamScore } from '@/components/outcomeBadge';
+import { parseMatchResult } from '@/store/matchOutcome';
 
 const TournamentFixtures = ({ tournamentId, totalRounds }) => {
     const router = useRouter();
@@ -15,16 +17,6 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
     const [showKnockouts, setShowKnockouts] = useState(false);
     const [knockoutView, setKnockoutView] = useState('default'); // 'default' or 'alternate'
     const [knockoutMatches, setKnockoutMatches] = useState([]);
-
-    // Function to parse match results
-    const parseMatchResult = (result) => {
-        if (!result) return { team1Score: 0, team2Score: 0 };
-        const scores = result.split('-').map(Number);
-        return {
-            team1Score: scores[0] || 0,
-            team2Score: scores[1] || 0
-        };
-    };
 
     // Fetch knockout matches separately
     const fetchKnockoutMatches = async () => {
@@ -38,6 +30,7 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
                         match_id: `${match.match_id}-${match.round_name}-${match.bracket_info.bracket_position}`,
                         ...parseMatchResult(match.match_result),
                         status: match.match_status?.status || 'pending',
+                        outcome_type: match.match_status?.outcome_type || null,
                         winner_team_id: match.match_status?.is_final ? match.match_status?.winner_team_id : null,
                     }));
                 setKnockoutMatches(knockoutMatchesArray);
@@ -126,7 +119,7 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
                         {match.team1_id && (
                             <div className={styles.teamId}>Team ID: {match.team1_id}</div>
                         )}
-                        <div className={styles.score}>{match.team1Score}</div>
+                        <TeamScore match={match} teamNumber={1} className={styles.score} />
                     </div>
                     <div className={styles.vs}>vs</div>
                     <div className={`${styles.team} ${
@@ -136,7 +129,7 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
                         {match.team2_id && (
                             <div className={styles.teamId}>Team ID: {match.team2_id}</div>
                         )}
-                        <div className={styles.score}>{match.team2Score}</div>
+                        <TeamScore match={match} teamNumber={2} className={styles.score} />
                     </div>
                 </div>
 
@@ -146,6 +139,7 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
                     <span className={`${styles.status} ${styles[match.status]}`}>
                         {match.status.charAt(0).toUpperCase() + match.status.slice(1)}
                     </span>
+                    <OutcomeBadge outcomeType={match.outcome_type} />
                 </div>
             </div>
         ));

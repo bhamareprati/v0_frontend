@@ -6,6 +6,7 @@ import stl from './MatchOverlay.module.scss';
 import { apiCall } from '@/store/utils';
 import { endpoints } from '@/store/urls';
 import { io } from 'socket.io-client';
+import { getOutcomeLabel, isUnscoredOutcome } from '@/store/matchOutcome';
 
 const MatchOverlay = ({ matchId, tournamentId }) => {
     const [scoreData, setScoreData] = useState(null);
@@ -63,21 +64,34 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
 
         newSocket.on('score_update', (data) => {
             console.log('📨 Score update received:', data);
-            if (data.match_id === matchId) {
-                setScoreData(prev => ({
+            // match_id is a string in the URL but a number in some payloads
+            if (String(data.match_id) !== String(matchId)) return;
+
+            if (isUnscoredOutcome(data.outcome_type)) {
+                // Decided without a score (walkover): update the result only, never the scores
+                setScoreData(prev => prev && ({
                     ...prev,
-                    team1: {
-                        ...prev.team1,
-                        team_id: data.team1_id,
-                        score: data.team1_score
-                    },
-                    team2: {
-                        ...prev.team2,
-                        team_id: data.team2_id,
-                        score: data.team2_score
-                    }
+                    status: data.status,
+                    is_final: data.is_final,
+                    outcome_type: data.outcome_type,
+                    winner_team_id: data.winner_team_id
                 }));
+                return;
             }
+
+            setScoreData(prev => ({
+                ...prev,
+                team1: {
+                    ...prev.team1,
+                    team_id: data.team1_id,
+                    score: data.team1_score
+                },
+                team2: {
+                    ...prev.team2,
+                    team_id: data.team2_id,
+                    score: data.team2_score
+                }
+            }));
         });
 
         newSocket.on('connect_error', (error) => {
@@ -140,6 +154,11 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
         return null;
     }
 
+    const walkover = isUnscoredOutcome(scoreData.outcome_type);
+    // "W" for the winner and a dash for the other team instead of a misleading 0-0
+    const walkoverMark = (team) =>
+        scoreData.winner_team_id && scoreData.winner_team_id === team?.team_id ? 'W' : '–';
+
     return (
         <div className={stl.overlay}>
             <div className={stl.scoreContainer}>
@@ -152,10 +171,15 @@ const MatchOverlay = ({ matchId, tournamentId }) => {
                 <div className={stl.scoreContent}>
                     <div className={stl.score}>
                         <span className={stl.teamId}>T{scoreData.team1?.team_id}</span>
-                        <span className={stl.scoreValue}>{scoreData.team1?.score || '0'}</span>
-                        <span className={stl.scoreValue}>{scoreData.team2?.score || '0'}</span>
+                        <span className={stl.scoreValue}>{walkover ? walkoverMark(scoreData.team1) : (scoreData.team1?.score || '0')}</span>
+                        <span className={stl.scoreValue}>{walkover ? walkoverMark(scoreData.team2) : (scoreData.team2?.score || '0')}</span>
                         <span className={stl.teamId}>T{scoreData.team2?.team_id}</span>
                     </div>
+                    {walkover && (
+                        <div className={stl.matchInfo}>
+                            <span>{getOutcomeLabel(scoreData.outcome_type).toUpperCase()}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 

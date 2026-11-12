@@ -3,6 +3,14 @@ import { apiCall } from '@/store/utils';
 import { endpoints } from '@/store/urls';
 import stl from './MatchTable.module.scss';
 import toast from 'react-hot-toast';
+import { OutcomeBadge } from '@/components/outcomeBadge';
+import { isUnscoredOutcome, getFixtureWinnerPlayers } from '@/store/matchOutcome';
+
+// "Walkover - Winner: A B" for matches decided without a score, else the score string
+const resultText = (match) =>
+  isUnscoredOutcome(match.match_status?.outcome_type)
+    ? `${match.match_result}${getFixtureWinnerPlayers(match) ? ` - Winner: ${getFixtureWinnerPlayers(match)}` : ''}`
+    : match.match_result;
 
 const MatchTable = ({ tournamentId }) => {
   const [matches, setMatches] = useState([]);
@@ -52,7 +60,7 @@ const MatchTable = ({ tournamentId }) => {
         match.pool || '-',
         match.team1_players,
         match.team2_players,
-        match.match_result,
+        resultText(match),
         match.match_status.status
       ]);
 
@@ -110,7 +118,18 @@ const MatchTable = ({ tournamentId }) => {
                 <td>{match.pool || '-'}</td>
                 <td>{match.team1_players}</td>
                 <td>{match.team2_players}</td>
-                <td>{match.match_result}</td>
+                <td>
+                  {isUnscoredOutcome(match.match_status.outcome_type) ? (
+                    <>
+                      <OutcomeBadge outcomeType={match.match_status.outcome_type} />
+                      {getFixtureWinnerPlayers(match) && (
+                        <div className={stl.winner}>Winner: {getFixtureWinnerPlayers(match)}</div>
+                      )}
+                    </>
+                  ) : (
+                    match.match_result
+                  )}
+                </td>
                 <td>
                   <span className={`${stl.status} ${stl[match.match_status.status]}`}>
                     {match.match_status.status}

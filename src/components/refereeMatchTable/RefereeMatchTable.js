@@ -4,6 +4,8 @@ import { endpoints } from '@/store/urls';
 import stl from './RefereeMatchTable.module.scss';
 import toast from 'react-hot-toast';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField } from '@mui/material';
+import { OutcomeBadge } from '@/components/outcomeBadge';
+import { isUnscoredOutcome, parseMatchResult, getFixtureWinnerPlayers } from '@/store/matchOutcome';
 
 const RefereeMatchTable = ({ tournamentId }) => {
   const [matches, setMatches] = useState([]);
@@ -72,24 +74,15 @@ const RefereeMatchTable = ({ tournamentId }) => {
         override: override
       };
 
-      const scorePromise = fetch(endpoints.updateMatchScore, {
+      // Finalizing is one backend operation: /update-score with final=true also sets the
+      // winner, outcome and status 'completed' (no second concurrent status request).
+      const response = await fetch(endpoints.updateMatchScore, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(requestBody),
       });
-
-      const statusPromise = isFinal ? 
-        apiCall(`${endpoints.updateMatchStatus}/${match.match_id}`, {
-          method: "POST",
-          body: {
-            tournament_id: tournamentId,
-            status: "completed"
-          }
-        }) : Promise.resolve();
-
-      const [response] = await Promise.all([scorePromise, statusPromise]);
       const resp = await response.json();
 
       if (!response.ok) {
@@ -108,8 +101,8 @@ const RefereeMatchTable = ({ tournamentId }) => {
           return {
             ...m,
             match_result: `${scores.team1Score}-${scores.team2Score}`,
-            match_status: isFinal 
-              ? { ...m.match_status, status: 'completed', is_final: true }
+            match_status: isFinal
+              ? { ...m.match_status, status: 'completed', is_final: true, outcome_type: resp.outcome_type, winner_team_id: resp.winner_team_id }
               : m.match_status
           };
         }
@@ -132,8 +125,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
       return;
     }
 
-    const [team1Score, team2Score] = match.match_result.split('-').map(Number);
-    setScores({ team1Score: team1Score || 0, team2Score: team2Score || 0 });
+    setScores(parseMatchResult(match.match_result));
     setEditingMatch(match);
   };
 
@@ -188,6 +180,13 @@ const RefereeMatchTable = ({ tournamentId }) => {
                         onChange={(e) => setScores({ ...scores, team2Score: Math.max(0, parseInt(e.target.value) || 0) })}
                       />
                     </div>
+                  ) : isUnscoredOutcome(match.match_status.outcome_type) ? (
+                    <>
+                      <OutcomeBadge outcomeType={match.match_status.outcome_type} />
+                      {getFixtureWinnerPlayers(match) && (
+                        <div>Winner: {getFixtureWinnerPlayers(match)}</div>
+                      )}
+                    </>
                   ) : (
                     match.match_result
                   )}
@@ -237,8 +236,9 @@ const RefereeMatchTable = ({ tournamentId }) => {
                       </button>
                     )
                   )}
-                  {match.match_status.status === 'completed' && (
-                    <button 
+                  {/* A walkover has no score to override */}
+                  {match.match_status.status === 'completed' && !isUnscoredOutcome(match.match_status.outcome_type) && (
+                    <button
                       onClick={() => handleEditClick(match)}
                       className={stl.editButton}
                     >
@@ -286,8 +286,7 @@ const RefereeMatchTable = ({ tournamentId }) => {
           ) : (
             <Button 
               onClick={() => {
-                const [team1Score, team2Score] = selectedMatch.match_result.split('-').map(Number);
-                setScores({ team1Score: team1Score || 0, team2Score: team2Score || 0 });
+                setScores(parseMatchResult(selectedMatch.match_result));
                 setEditingMatch(selectedMatch);
                 setShowStatusModal(false);
               }}
