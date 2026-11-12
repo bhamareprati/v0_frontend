@@ -42,6 +42,7 @@ future work) is in the backend README**; this file covers the frontend only.
 | `src/components/matchTable/MatchTable.js` (+ `.scss`) | Badge, winner, CSV text. |
 | `src/components/matchOverlay/MatchOverlay.js` | Walkover display; socket handler compares `String(match_id)`s (URL id is a string, the walkover payload id is a number) and updates only result fields for a walkover event. |
 | `src/components/fixtures/*.js`, `PoolFixtures.js` | Shared parser replaces three copies of `parseMatchResult`; `outcome_type` carried through; badge / winner / `W/O`. |
+| `BaseFixtures.js`, `TournamentFixtures.js` | **Unrelated bug fix (2 lines):** the original code crashed with `ReferenceError: setSelectedPoolId is not defined` when clicking the *Court-wise* or *Status-wise* tab, because `BaseFixtures` never returned that setter. It now does. |
 
 No redesign: existing components, MUI dialog and SCSS conventions are reused; new styles are additive.
 
