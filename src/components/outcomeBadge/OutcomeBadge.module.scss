@@ -1,0 +1,27 @@
+// Reuses the pill look of the existing status tags (.status in MatchTable / Fixtures).
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  background-color: #ffe8cc;
+  color: #a34e00;
+  border: 1px solid #f5c58b;
+  white-space: nowrap;
+}
+
+.winnerTag {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.noScore {
+  color: #9aa0a6;
+}
