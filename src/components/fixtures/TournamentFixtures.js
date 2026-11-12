@@ -53,6 +53,7 @@ const TournamentFixtures = ({ tournamentId, totalRounds }) => {
         loading,
         selectedRound,
         selectedPoolId,
+        setSelectedPoolId,
         selectedCourt,
         setSelectedCourt,
         getFilteredMatches,

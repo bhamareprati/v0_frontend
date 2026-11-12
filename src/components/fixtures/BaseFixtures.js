@@ -124,6 +124,7 @@ const BaseFixtures = ({
         loading,
         selectedRound,
         selectedPoolId,
+        setSelectedPoolId,
         selectedCourt,
         setSelectedCourt,
         getFilteredMatches,
